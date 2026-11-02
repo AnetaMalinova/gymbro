@@ -253,7 +253,10 @@ function confetti(){if(window.matchMedia&&matchMedia("(prefers-reduced-motion: r
  var t0=performance.now();(function f(t){var e=t-t0;g.clearRect(0,0,w,h);P.forEach(function(p){p.vy+=.28;p.vx*=.992;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;g.save();g.globalAlpha=Math.max(0,1-e/2400);g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore()});
   if(e<2400)requestAnimationFrame(f);else c.remove()})(t0)}
 var L=[],DL=[];
-function syncDL(){var dt=ldate();D.forEach(function(d){var c=d.ex.length>0&&d.ex.every(function(e){return d.done[e]})&&d.ex.some(function(e){return d.done[e]===true}),ix=-1;DL.forEach(function(e,i){if(e.d===dt&&e.dy===d.id)ix=i});if(c&&ix<0)DL.push({d:dt,dy:d.id});else if(!c&&ix>-1)DL.splice(ix,1)})}
+var DC=null;
+function dcomp(d){return d.ex.length>0&&d.ex.every(function(e){return d.done[e]})&&d.ex.some(function(e){return d.done[e]===true})}
+function dcsnap(){DC={};D.forEach(function(d){DC[d.id]=dcomp(d)})}
+function syncDL(){if(!DC){dcsnap();return}var dt=ldate();D.forEach(function(d){var c=dcomp(d),was=DC[d.id];DC[d.id]=c;if(was===undefined)return;var ix=-1;DL.forEach(function(e,i){if(e.d===dt&&e.dy===d.id)ix=i});if(c&&!was&&ix<0)DL.push({d:dt,dy:d.id});else if(!c&&was&&ix>-1)DL.splice(ix,1)})}
 function ldate(){var t=new Date();return t.getFullYear()+"-"+("0"+(t.getMonth()+1)).slice(-2)+"-"+("0"+t.getDate()).slice(-2)}
 function llog(e,dy,on){var dt=ldate();for(var i=L.length-1;i>=0;i--)if(L[i].dy===dy&&L[i].ex===e&&L[i].d===dt)L.splice(i,1);
  if(on){var x=XV(e,dy),a=SA(x),sets=[];for(var j=0;j<a.r.length;j++)sets.push({r:a.r[j],w:a.w[j]});L.push({t:new Date().toISOString(),d:dt,dy:dy,dn:dd(dy).n,ex:e,en:x.n,sets:sets,u:x.u||"kg"})}}
@@ -367,7 +370,7 @@ function norm(){
  for(var k in E){var x=E[k];x.pt=Array.isArray(x.pt)?x.pt:[];x.h=Array.isArray(x.h)?x.h:[];x.notes=(x.notes||[]).map(function(n){return typeof n=="string"?{t:n}:n});x.i=Array.isArray(x.i)?x.i.join("\n"):(x.i||"");if(x.m==null)x.m=""}
  D.forEach(function(d){d.done=d.done||{};d.ex=d.ex||[];d.p=d.p||"";if(d.auto===undefined)d.auto=d.p?false:true});
 }
-function loadSaved(o){if(!o||!o.E||!o.D)return false;for(var k in E)delete E[k];Object.assign(E,o.E);D.length=0;o.D.forEach(function(x){D.push(x)});L.length=0;(o.L||[]).forEach(function(x){L.push(x)});DL.length=0;(o.DL||[]).forEach(function(x){DL.push(x)});norm();return true}
+function loadSaved(o){DC=null;if(!o||!o.E||!o.D)return false;for(var k in E)delete E[k];Object.assign(E,o.E);D.length=0;o.D.forEach(function(x){D.push(x)});L.length=0;(o.L||[]).forEach(function(x){L.push(x)});DL.length=0;(o.DL||[]).forEach(function(x){DL.push(x)});norm();return true}
 function backupDone(){try{localStorage.setItem(KLB,new Date().toISOString())}catch(e){}say("Záloha uložena");R()}
 function doExport(){
  var data=JSON.stringify({app:"gymbro",v:2,at:new Date().toISOString(),E:E,D:D,L:L,DL:DL},null,1),name="gymbro-zaloha-"+new Date().toISOString().slice(0,10)+".json",file=new File([data],name,{type:"application/json"});
@@ -403,6 +406,7 @@ function say(t,u){toast={t:t};if(!u)undo=null;clearTimeout(say.k);say.k=setTimeo
 document.addEventListener("click",function(ev){
  if(ev.target.classList&&ev.target.classList.contains("shade")){sheet=null;sheetErr=false;R();return}
  var b=ev.target.closest("[data-a]");if(!b){if(menu){menu=false;R()}return}
+ if(!DC)dcsnap();
  var a=b.dataset.a,id=b.dataset.id,i=+b.dataset.i,t=top(),d,y0=window.scrollY||0;
  if(a=="prof"){menu=!menu;R();return}
  if(a=="tab"){if(t.v=="newex")discard();nav=[{v:id}];snaps=[];uopen=null;popen=null;window.scrollTo(0,0);R();return}
@@ -443,9 +447,9 @@ document.addEventListener("click",function(ev){
    if(sc=="d"&&dy){var dx=dd(dy);dx.ov=dx.ov||{};var o=dx.ov[sheet]=dx.ov[sheet]||{};if(String(val)===String(x2[f]))delete o[f];else o[f]=val;if(!Object.keys(o).length)delete dx.ov[sheet]}
    else{x2[f]=val;D.forEach(function(q){if(q.ov&&q.ov[sheet]){delete q.ov[sheet][f];if(!Object.keys(q.ov[sheet]).length)delete q.ov[sheet]}})}
    sheet=null;sheetErr=false}}
- else if(a=="newweek"){undo={snap:snapNow()};D.forEach(function(d){d.done={}});say("Nový týden začat",1)}
+ else if(a=="newweek"){DC=null;undo={snap:snapNow()};D.forEach(function(d){d.done={}});say("Nový týden začat",1)}
  else if(a=="reset"){d=dd(id);undo={id:id,done:Object.assign({},d.done)};d.ex.forEach(function(e){llog(e,d.id,false)});d.done={};say("Cviky odznačeny",1)}
- else if(a=="undo"){if(undo.snap){var o=JSON.parse(undo.snap);for(var kk in E)delete E[kk];Object.assign(E,o.E);D.length=0;o.D.forEach(function(q){D.push(q)})}else if(undo.day)D.splice(undo.idx,0,undo.day);else if(undo.exId){E[undo.exId]=undo.ex;undo.pos.forEach(function(p){dd(p[0]).ex.splice(p[1],0,undo.exId)})}else if(undo.note)E[undo.note[0]].notes[undo.note[1]].s=false;else dd(undo.id).done=undo.done;undo=null;toast=null}
+ else if(a=="undo"){if(undo.snap){DC=null;var o=JSON.parse(undo.snap);for(var kk in E)delete E[kk];Object.assign(E,o.E);D.length=0;o.D.forEach(function(q){D.push(q)})}else if(undo.day)D.splice(undo.idx,0,undo.day);else if(undo.exId){E[undo.exId]=undo.ex;undo.pos.forEach(function(p){dd(p[0]).ex.splice(p[1],0,undo.exId)})}else if(undo.note)E[undo.note[0]].notes[undo.note[1]].s=false;else dd(undo.id).done=undo.done;undo=null;toast=null}
  else if(a=="newday"){take();var n={id:uid(),n:"Nový den",p:"",ex:[],done:{},auto:true};D.push(n);nav.push({v:"editday",id:n.id})}
  else if(a=="dauto"){d=dd(t.id);if(d.auto===false)d.auto=true;else{d.p=dps(d).join(" + ");d.auto=false}}
  else if(a=="part"){d=dd(t.id);var cur=d.p.split("+").map(function(x){return x.trim()});var s=PARTS[i];var ix=cur.indexOf(s);if(ix>-1)cur.splice(ix,1);else cur.push(s);d.p=PARTS.filter(function(x){return cur.indexOf(x)>-1}).join(" + ")}
