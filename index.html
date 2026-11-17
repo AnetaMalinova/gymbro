@@ -318,7 +318,7 @@ function streak(){
  var pf=function(n){return("0"+n).slice(-2)},iso=function(q){return q.getFullYear()+"-"+pf(q.getMonth()+1)+"-"+pf(q.getDate())},now=new Date(),dw=(now.getDay()+6)%7,mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-dw);
  function has(w){for(var k=0;k<7;k++){var q=iso(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()-7*w+k));if(DL.some(function(e){return e.d===q}))return true}return false}
  var n=0,w=has(0)?0:1;while(w<520&&has(w)){n++;w++}return n}
-function monthcal(){
+function monthcal(own){
  var now=new Date(),y=now.getFullYear(),m=now.getMonth(),
  off=(new Date(y,m,1).getDay()+6)%7,len=new Date(y,m+1,0).getDate(),pf=function(n){return("0"+n).slice(-2)},dots="",n=streak();
  var MN=["leden","únor","březen","duben","květen","červen","červenec","srpen","září","říjen","listopad","prosinec"];
@@ -327,7 +327,7 @@ function monthcal(){
  for(var d=1;d<=len;d++){var iso=y+"-"+pf(m+1)+"-"+pf(d),on=DL.some(function(e){return e.d===iso});
   dots+='<i class="sd'+(on?' on':'')+(d==now.getDate()?' t':'')+'"></i>'}
  var fl='<span style="display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:40px;border-radius:50%;background:'+(n?'var(--accent)':'var(--line)')+';color:'+(n?'#fff':'var(--muted)')+';font:800 18px/22px Inter,sans-serif">'+n+'</span>';
- return '<div class="card mcal" data-a="tab" data-id="graphs" role="button" aria-label="Série tréninků, přejít na grafy"><div class="sr"><div class="sk">'+fl+'<div class="st"><b>Série</b><span class="mut">'+(n==1?'1 týden':n>=2&&n<=4?n+' týdny':n+' týdnů')+'</span></div></div><div class="sgc"><div class="sg">'+dots+'</div><button class="slnk" data-a="tab" data-id="graphs">Přehled</button></div></div></div>';
+ return '<div class="card mcal"'+(own?'':' data-a="tab" data-id="graphs" role="button" aria-label="Série tréninků, přejít na grafy"')+'><div class="sr"><div class="sk">'+fl+'<div class="st"><b>Série</b><span class="mut">'+(n==1?'1 týden':n>=2&&n<=4?n+' týdny':n+' týdnů')+'</span></div></div><div class="sgc"><div class="sg">'+dots+'</div>'+(own?'':'<button class="slnk" data-a="tab" data-id="graphs">Přehled</button>')+'</div></div></div>';
 }
 function home(){
  var nx=D.filter(function(d){return !d.ex.every(function(e){return d.done[e]})})[0];
@@ -339,7 +339,7 @@ function home(){
   var chev='<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
   return '<div class="'+cls+'" data-a="day" data-id="'+d.id+'"><div class="row"><span>'+esc(d.n)+'</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:8px">'+cnt+chev+'</span></div><div class="row">'+dps(d).map(function(s){return '<span class="chip">'+esc(s)+'</span>'}).join("")+'</div>'+(n>0&&!all?'<div class="prog" aria-hidden="true"><i style="width:'+pct+'%"></i></div>':'')+'</div>'}).join("")
   +(D.length?'':'<p class="mut" style="text-align:center;margin:var(--s6) 0">Zatím nemáš žádný den. Přidej první a vyber partie, které budeš cvičit.</p>')
-  +(D.length?'':'<button class="full" data-a="newday">+ Přidat den</button>')+(ad&&!wd?'<button data-a="newweek" class="mut" style="display:block;margin:var(--s2) auto 0;border:none;background:none;text-decoration:underline;padding:0 var(--s2)">Začít nový týden</button>':'')+monthcal();
+  +(D.length?'':'<button class="full" data-a="newday">+ Přidat den</button>')+(ad&&!wd?'<button data-a="newweek" class="mut" style="display:block;margin:var(--s2) auto 0;border:none;background:none;text-decoration:underline;padding:0 var(--s2)">Začít nový týden</button>':'');
 }
 function day(){
  var d=dd(top().id);
@@ -402,7 +402,7 @@ function profile(){
  return bar("Profil",0)+'<div class="sh out" style="margin-top:0"><h3>Záloha</h3></div><div class="card sec" style="cursor:default"><p class="mut">Uloží všechna tvoje data do souboru. Ulož ho do iCloudu nebo ho pošli e-mailem. Hodí se před výměnou telefonu.</p><button class="full" data-a="exp" style="margin-top:var(--s2)">Exportovat zálohu</button><p class="mut" style="font-size:13px;line-height:18px">'+(function(){var lb=null;try{lb=localStorage.getItem(KLB)}catch(e){}return lb?'Poslední záloha: '+new Date(lb).toLocaleString("cs-CZ",{dateStyle:"medium",timeStyle:"short"}):'Zatím jsi nic nezálohovala.'})()+'</p></div><div class="sh out"><h3>Obnova</h3></div><div class="card sec" style="cursor:default"><p class="mut">Načte data ze souboru zálohy a přepíše to, co v aplikaci máš teď.</p><button class="full" data-a="restore" style="margin-top:var(--s2)">Obnovit data</button></div>';
 }
 function graphs(){
- return bar("Grafy",0)+'<div class="card sec" style="cursor:default"><p class="mut">Tady bude přehled tvého cvičení: kolik dní týdně cvičíš a jak se ti vyvíjejí váhy.</p><p class="mut">Data se už ukládají po každém odškrtnutém cviku. Zatím zaznamenáno: '+L.length+'.</p></div>';
+ return bar("Grafy",0)+monthcal(true)+'<div class="card sec" style="cursor:default"><p class="mut">Tady bude přehled tvého cvičení: kolik dní týdně cvičíš a jak se ti vyvíjejí váhy.</p><p class="mut">Data se už ukládají po každém odškrtnutém cviku. Zatím zaznamenáno: '+L.length+'.</p></div>';
 }
 var TABS=[["home","Trénink",'<rect x="2" y="8.5" width="3.5" height="7" rx="1.2"/><rect x="5.5" y="5.5" width="4" height="13" rx="1.4"/><rect x="14.5" y="5.5" width="4" height="13" rx="1.4"/><rect x="18.5" y="8.5" width="3.5" height="7" rx="1.2"/><path d="M9.5 12h5"/>'],["graphs","Grafy",'<path d="M5 20V10M12 20V4M19 20v-7"/>'],["profile","Profil",'<circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.5-4 13.5-4 15 0"/>']];
 function tabbar(){return '<nav class="tabbar" aria-label="Hlavní menu">'+TABS.map(function(q){var on=nav[0].v==q[0];return '<button data-a="tab" data-id="'+q[0]+'"'+(on?' class="on" aria-current="page"':'')+'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+q[2]+'</svg><span>'+q[1]+'</span></button>'}).join("")+'</nav>'}
